@@ -54,7 +54,7 @@ TEXT ·set_ttbr0_el1(SB),$0-8
 	MRS	SCTLR_EL1, R0
 	BIC	$1<<19, R0	// clear WXN bit
 	ORR	$1<<12, R0	// enable I-cache
-	ORR	$1<<2, R0	// enable D-cache
+	//ORR	$1<<2, R0	// enable D-cache
 	ORR	$1<<0, R0	// enable MMU
 	MSR	R0, SCTLR_EL1
 	ISB	SY

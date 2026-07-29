@@ -40,7 +40,7 @@ var (
 // setup (e.g. runtime/goos.Hwinit1).
 func Init() {
 	ARM64.Init()
-	ARM64.EnableCache()
+	//ARM64.EnableCache()
 
 	initTimers()
 }
