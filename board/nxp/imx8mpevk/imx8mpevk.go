@@ -24,6 +24,7 @@ import (
 var (
 	ENET1 = imx8mp.ENET1
 	UART1 = imx8mp.UART1
+	UART2 = imx8mp.UART2
 )
 
 // Init takes care of the lower level initialization triggered early in runtime
@@ -31,8 +32,10 @@ var (
 //
 //go:linkname Init runtime/goos.Hwinit1
 func Init() {
+	imx8mp.Native = true
+	imx8mp.Family = imx8mp.IMX8MPQ
 	imx8mp.Init()
 
 	// initialize console
-	imx8mp.UART1.Init()
+	imx8mp.UART2.Init()
 }

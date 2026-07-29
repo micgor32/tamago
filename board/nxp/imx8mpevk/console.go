@@ -21,5 +21,5 @@ import (
 
 //go:linkname printk runtime/goos.Printk
 func printk(c byte) {
-	imx8mp.UART1.Tx(c)
+	imx8mp.UART2.Tx(c)
 }

@@ -12,6 +12,35 @@
 #include "textflag.h"
 
 TEXT cpuinit(SB),NOSPLIT|NOFRAME,$0
+	MOVD	$0x308900b4, R3
+
+uart2_wait_e:
+	MOVWU	(R3), R4
+	AND	$1<<4, R4, R4
+	CMP	$0, R4
+	BNE	uart2_wait_e
+
+	// UART2 UTXD
+	MOVD	$0x30890040, R1
+	MOVD	$0x45, R2		// 'E'
+	MOVW	R2, (R1)
+	DSB	SY
+
+	MOVD	$0, R15
+	MOVD	$0xd06b, R14
+
+jtag_wait:
+	CMP	R14, R15
+	BEQ	jtag_release
+
+	YIELD
+	B	jtag_wait
+
+jtag_release:
+	MRS	CurrentEL, R0
+	LSR	$2, R0, R0
+	AND	$0b11, R0, R0
+
 	MRS	CurrentEL, R0
 	LSR	$2, R0, R0
 	AND	$0b11, R0, R0
@@ -58,6 +87,20 @@ init:
 	B	·cpuinit_el1(SB)
 
 TEXT ·cpuinit_el1(SB),NOSPLIT|NOFRAME,$0
+	MOVD	$0x308900b4, R3
+
+uart2_wait_1:
+	MOVWU	(R3), R4
+	AND	$1<<4, R4, R4
+	CMP	$0, R4
+	BNE	uart2_wait_1
+
+	MOVD	$0x30890040, R1
+	MOVD	$0x31, R2		// '1'
+	MOVW	R2, (R1)
+	DSB	SY
+
+	MRS	SCTLR_EL1, R0
 	// D12.2.100 SCTLR_EL1, System Control Register (EL1)
 	MRS	SCTLR_EL1, R0
 	BIC	$1<<1, R0	// clear A bit
@@ -72,5 +115,39 @@ TEXT ·cpuinit_el1(SB),NOSPLIT|NOFRAME,$0
 	MOVD	runtime∕goos·RamStackOffset(SB), R2
 	ADD	R1, RSP
 	SUB	R2, RSP
+
+	MOVD	$0x308900b4, R3
+
+uart2_wait_r:
+	MOVW	(R3), R4
+	AND	$1<<4, R4, R4
+	CMP	$0, R4
+	BNE	uart2_wait_r
+
+	MOVD	$0x30890040, R1
+	MOVD	$0x52, R2		// 'R'
+	MOVW	R2, (R1)
+	DSB	SY
+
+/*
+	 * Non-secure EL1 JTAG rendezvous.
+	 *
+	 * Release from GDB with:
+	 *
+	 *     set $x11 = 0xcafe
+	 */
+	MOVD	$0, R11
+	MOVD	$0xcafe, R12
+
+el1_jtag_wait:
+	CMP	R12, R11
+	BEQ	el1_jtag_release
+	YIELD
+	B	el1_jtag_wait
+
+el1_jtag_release:
+	// Avoid carrying the debugging values into the Go runtime.
+	MOVD	$0, R11
+	MOVD	$0, R12
 
 	B	_rt0_tamago_start(SB)
